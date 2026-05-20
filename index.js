@@ -2,6 +2,9 @@ const express = require('express');
 const app = express();
 app.use(express.json());
 
+// Set port dynamically for Render, defaulting to 3000 locally
+const PORT = process.env.PORT || 3000;
+
 // Our live server-side database of 20 clients
 let clientDatabase = [
     { id: 1, name: "Kaya Moore" },
@@ -32,24 +35,24 @@ app.post('/sync', (req, res) => {
 
     // If the app is brand new, send the entire master list
     if (status === "NEW") {
-        return res.json({ status: "UPDATE", data: clientList });
+        return res.json({ status: "UPDATE", data: clientDatabase });
     }
 
     // Process offline changes sent from the phone
     if (clientChanges && clientChanges.length > 0) {
         clientChanges.forEach(change => {
-            // Find the client by old name or by an ID
-            const client = clientList.find(c => c.name === change.oldname);
+            // Find the client by old name inside clientDatabase
+            const client = clientDatabase.find(c => c.name === change.oldname);
             if (client) {
                 // Ensure name isn't already taken on the server
-                const nameExists = clientList.some(c => c.name === change.newname);
+                const nameExists = clientDatabase.some(c => c.name === change.newname);
                 if (!nameExists) {
                     client.name = change.newname;
                 }
             }
         });
         // After applying app changes, return the updated server list back to the phone
-        return res.json({ status: "UPDATE", data: clientList });
+        return res.json({ status: "UPDATE", data: clientDatabase });
     }
 
     // Default response if nothing changed
@@ -58,15 +61,16 @@ app.post('/sync', (req, res) => {
 
 // 2. WEBVIEW VIEWING ENDPOINT (Renders the nice clean HTML page)
 app.get('/webview', (req, res) => {
-    let listItems = clientList.map(c => `<li>${c.name} <button onclick="editName('${c.name}')">Edit</button></li>`).join('');
+    let listItems = clientDatabase.map(c => `<li>${c.name} <button onclick="editName('${c.name}')">Edit</button></li>`).join('');
     
     let html = `
     <html>
     <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
             body { font-family: Arial, sans-serif; margin: 20px; }
-            li { padding: 10px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; }
-            button { background: #0E7DAB; color: white; border: none; padding: 5px 10px; borderRadius: 4px; }
+            li { padding: 10px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; }
+            button { background: #0E7DAB; color: white; border: none; padding: 5px 10px; border-radius: 4px; font-weight: bold; }
         </style>
     </head>
     <body>
@@ -75,10 +79,10 @@ app.get('/webview', (req, res) => {
         <script>
             function editName(oldName) {
                 let newName = prompt("Edit client name:", oldName);
-                if (newName && newName !== oldName) {
+                if (newName && newName.trim() !== "" && newName !== oldName) {
                     // Send change to Android app layer via JavaScript Interface
                     if(window.AndroidSync) {
-                        window.AndroidSync.processEdit(oldName, newName);
+                        window.AndroidSync.processEdit(oldName, newName.trim());
                     }
                 }
             }
@@ -88,4 +92,4 @@ app.get('/webview', (req, res) => {
     res.send(html);
 });
 
-app.listen(3000, () => console.log('SenzeySync Server running on port 3000'));
+app.listen(PORT, () => console.log(`SenzeySync Server running on port ${PORT}`));
