@@ -4,7 +4,6 @@ app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
 
-// Live server-side database
 let clientDatabase = [
     { id: 1, name: "Kaya Moore" },
     { id: 2, name: "Taya Chamberlain" },
@@ -32,7 +31,6 @@ let clientDatabase = [
 app.post('/sync', (req, res) => {
     const { status, clientChanges } = req.body;
 
-    // Process edits (both immediate online edits and queued offline edits)
     if (status === "UPDATE" && clientChanges && clientChanges.length > 0) {
         clientChanges.forEach(change => {
             const client = clientDatabase.find(c => c.name === change.oldname);
@@ -46,8 +44,7 @@ app.post('/sync', (req, res) => {
         return res.json({ status: "UPDATE", data: clientDatabase });
     }
 
-    // FIX: If the app asks normally (OLD or any routine), ALWAYS return the database
-    // This ensures your Android cache never gets cleared with empty data!
+    // Default: Always return the complete data array so the app's cache never breaks
     res.json({ status: "UPDATE", data: clientDatabase });
 });
 
@@ -61,6 +58,7 @@ app.get('/webview', (req, res) => {
     `).join('');
     
     let html = `
+    <!DOCTYPE html>
     <html>
     <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -69,7 +67,7 @@ app.get('/webview', (req, res) => {
             h2 { color: #0E7DAB; margin-bottom: 20px; }
             ul { list-style-type: none; padding: 0; margin: 0; }
             li { background: white; margin-bottom: 10px; padding: 14px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-            button { background: #0E7DAB; color: white; border: none; padding: 8px 14px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+            button { background: #0E7DAB; color: white; border: none; padding: 8px 14px; border-radius: 66px; font-weight: bold; cursor: pointer; }
         </style>
     </head>
     <body>
@@ -81,8 +79,6 @@ app.get('/webview', (req, res) => {
                 if (newName && newName.trim() !== "" && newName.trim() !== oldName) {
                     if (window.AndroidSync) {
                         window.AndroidSync.processEdit(oldName, newName.trim());
-                    } else {
-                        alert("Bridge connection missing");
                     }
                 }
             }
@@ -92,4 +88,4 @@ app.get('/webview', (req, res) => {
     res.send(html);
 });
 
-app.listen(PORT, () => console.log(`SenzeySync Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
