@@ -2,10 +2,9 @@ const express = require('express');
 const app = express();
 app.use(express.json());
 
-// Set port dynamically for Render, defaulting to 3000 locally
 const PORT = process.env.PORT || 3000;
 
-// Our live server-side database of 20 clients
+// Live server-side database
 let clientDatabase = [
     { id: 1, name: "Kaya Moore" },
     { id: 2, name: "Taya Chamberlain" },
@@ -29,48 +28,48 @@ let clientDatabase = [
     { id: 20, name: "Angelina Miles" }
 ];
 
-// 1. ROUTINE SYNC ENDPOINT (Checks for changes every 1 minute)
+// 1. ROUTINE SYNC ENDPOINT
 app.post('/sync', (req, res) => {
     const { status, clientChanges } = req.body;
 
-    // If the app is brand new, send the entire master list
-    if (status === "NEW") {
-        return res.json({ status: "UPDATE", data: clientDatabase });
-    }
-
-    // Process offline changes sent from the phone
-    if (clientChanges && clientChanges.length > 0) {
+    // Process edits (both immediate online edits and queued offline edits)
+    if (status === "UPDATE" && clientChanges && clientChanges.length > 0) {
         clientChanges.forEach(change => {
-            // Find the client by old name inside clientDatabase
             const client = clientDatabase.find(c => c.name === change.oldname);
             if (client) {
-                // Ensure name isn't already taken on the server
                 const nameExists = clientDatabase.some(c => c.name === change.newname);
                 if (!nameExists) {
                     client.name = change.newname;
                 }
             }
         });
-        // After applying app changes, return the updated server list back to the phone
         return res.json({ status: "UPDATE", data: clientDatabase });
     }
 
-    // Default response if nothing changed
-    res.json({ status: "NONE" });
+    // FIX: If the app asks normally (OLD or any routine), ALWAYS return the database
+    // This ensures your Android cache never gets cleared with empty data!
+    res.json({ status: "UPDATE", data: clientDatabase });
 });
 
-// 2. WEBVIEW VIEWING ENDPOINT (Renders the nice clean HTML page)
+// 2. WEBVIEW VIEWING ENDPOINT
 app.get('/webview', (req, res) => {
-    let listItems = clientDatabase.map(c => `<li>${c.name} <button onclick="editName('${c.name}')">Edit</button></li>`).join('');
+    let listItems = clientDatabase.map(c => `
+        <li>
+            <span>${c.name}</span> 
+            <button onclick="editName('${c.name}')">Edit</button>
+        </li>
+    `).join('');
     
     let html = `
     <html>
     <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
-            body { font-family: Arial, sans-serif; margin: 20px; }
-            li { padding: 10px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; }
-            button { background: #0E7DAB; color: white; border: none; padding: 5px 10px; border-radius: 4px; font-weight: bold; }
+            body { font-family: Arial, sans-serif; margin: 0; padding: 16px; background-color: #f8f9fa; }
+            h2 { color: #0E7DAB; margin-bottom: 20px; }
+            ul { list-style-type: none; padding: 0; margin: 0; }
+            li { background: white; margin-bottom: 10px; padding: 14px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+            button { background: #0E7DAB; color: white; border: none; padding: 8px 14px; border-radius: 6px; font-weight: bold; cursor: pointer; }
         </style>
     </head>
     <body>
@@ -79,10 +78,11 @@ app.get('/webview', (req, res) => {
         <script>
             function editName(oldName) {
                 let newName = prompt("Edit client name:", oldName);
-                if (newName && newName.trim() !== "" && newName !== oldName) {
-                    // Send change to Android app layer via JavaScript Interface
-                    if(window.AndroidSync) {
+                if (newName && newName.trim() !== "" && newName.trim() !== oldName) {
+                    if (window.AndroidSync) {
                         window.AndroidSync.processEdit(oldName, newName.trim());
+                    } else {
+                        alert("Bridge connection missing");
                     }
                 }
             }
