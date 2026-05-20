@@ -3,14 +3,27 @@ const app = express();
 app.use(express.json());
 
 // Our live server-side database of 20 clients
-let clientList = [
-    { id: 1, name: "Alpha CRM" }, { id: 2, name: "Beta Tech" }, { id: 3, name: "Gamma Global" },
-    { id: 4, name: "Delta Logistics" }, { id: 5, name: "Epsilon Media" }, { id: 6, name: "Zeta Consulting" },
-    { id: 7, name: "Eta FinTech" }, { id: 8, name: "Theta Security" }, { id: 9, name: "Iota Creative" },
-    { id: 10, name: "Kappa Industries" }, { id: 11, name: "Lambda Law" }, { id: 12, name: "Mu Medical" },
-    { id: 13, name: "Nu Networks" }, { id: 14, name: "Xi Electronics" }, { id: 15, name: "Omicron Retail" },
-    { id: 16, name: "Pi Property" }, { id: 17, name: "Rho Rockets" }, { id: 18, name: "Sigma Solutions" },
-    { id: 19, name: "Tau Trading" }, { id: 20, name: "Upsilon Ventures" }
+let clientList = let clientDatabase = [
+    { id: 1, name: "Kaya Moore" },
+    { id: 2, name: "Taya Chamberlain" },
+    { id: 3, name: "Woody Leach" },
+    { id: 4, name: "Shane Atkinson" },
+    { id: 5, name: "Jenna Cooper" },
+    { id: 6, name: "Kye Palmer" },
+    { id: 7, name: "Nicola Robles" },
+    { id: 8, name: "Tomasz Mccabe" },
+    { id: 9, name: "Katerina Knight" },
+    { id: 10, name: "Leonard Vaughn" },
+    { id: 11, name: "Anaya Hurley" },
+    { id: 12, name: "Diane Strong" },
+    { id: 13, name: "Nell Reeves" },
+    { id: 14, name: "Ridwan Hubbard" },
+    { id: 15, name: "Lexie Nicholson" },
+    { id: 16, name: "Isabelle Fletcher" },
+    { id: 17, name: "Tatiana Khan" },
+    { id: 18, name: "Maria Kendall" },
+    { id: 19, name: "Marilyn Gill" },
+    { id: 20, name: "Angelina Miles" }
 ];
 
 // 1. ROUTINE SYNC ENDPOINT (Checks for changes every 1 minute)
