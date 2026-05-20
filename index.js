@@ -32,19 +32,25 @@ app.post('/sync', (req, res) => {
     const { status, clientChanges } = req.body;
 
     if (status === "UPDATE" && clientChanges && clientChanges.length > 0) {
+        console.log("Received data sync payload:", clientChanges);
+        
         clientChanges.forEach(change => {
             const client = clientDatabase.find(c => c.name === change.oldname);
             if (client) {
                 const nameExists = clientDatabase.some(c => c.name === change.newname);
                 if (!nameExists) {
                     client.name = change.newname;
+                    console.log(`Success: Changed '${change.oldname}' to '${change.newname}'`);
+                } else {
+                    console.log(`Aborted: Name '${change.newname}' already exists.`);
                 }
+            } else {
+                console.log(`Error: Could not find matching server client for name: '${change.oldname}'`);
             }
         });
         return res.json({ status: "UPDATE", data: clientDatabase });
     }
 
-    // Default: Always return the complete data array so the app's cache never breaks
     res.json({ status: "UPDATE", data: clientDatabase });
 });
 
