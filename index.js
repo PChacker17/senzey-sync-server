@@ -3,7 +3,7 @@ const app = express();
 app.use(express.json());
 
 // Our live server-side database of 20 clients
-let clientList = let clientDatabase = [
+let clientDatabase = [
     { id: 1, name: "Kaya Moore" },
     { id: 2, name: "Taya Chamberlain" },
     { id: 3, name: "Woody Leach" },
